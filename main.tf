@@ -8,41 +8,29 @@ resource "aws_instance" "example" {
   associate_public_ip_address = true
   vpc_security_group_ids = [aws_security_group.instance.id]
 
-user_data = <<-EOF
-  #!/bin/bash
+ user_data = <<-EOF
+    #!/bin/bash
+    sudo wget https://busybox.net/downloads/binaries/1.28.1-defconfig-multiarch/busybox-x86_64
+    sudo mv busybox-x86_64 busybox
+    sudo chmod +x busybox
+    sudo mv busybox /usr/local/bin/
+    sudo yum install iptables -y
+    sudo yum install iptables-services -y
+    sudo systemctl start iptables
+    sudo systemctl enable iptables
+    sudo iptables -I INPUT -p tcp --dport 8080 -j ACCEPT
+    sudo service iptables save
+    echo "Hello Tomas ;)" > /home/ec2-user/index.html
+    sudo chown ec2-user:ec2-user /home/ec2-user/index.html
+    sudo chmod -R 755 /home/ec2-user
+    sudo nohup /usr/local/bin/busybox httpd -f -p 8080 -h /home/ec2-user &
+  EOF
 
-sudo wget https://busybox.net/downloads/binaries/1.28.1-defconfig-multiarch/busybox-x86_64
-sudo mv busybox-x86_64 busybox
-sudo chmod +x busybox
-sudo mv busybox /usr/local/bin/
-
-sudo yum install iptables -y
-sudo yum install iptables-services -y
-sudo systemctl start iptables
-sudo systemctl enable iptables
-
-sudo iptables -I INPUT -p tcp --dport 8080 -j ACCEPT        #kazkodel neveikia 
-sudo service iptables save
-
-
-
-# Create the index.html
-sudo echo "Hello Tomas ;)" > /home/ec2-user/index.html
-sudo chown ec2-user:ec2-user /home/ec2-user/index.html
-sudo chmod -R 755 /home/ec2-user
-
-# Start BusyBox HTTP server
-sudo nohup /usr/local/bin/busybox httpd -f -p 8080 -h /home/ec2-user 
-
-
-EOF
 
 
   tags = {
     Name = "Terraform-example"
   }
-
-
 
 }
 
