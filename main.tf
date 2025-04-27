@@ -2,13 +2,13 @@ provider "aws" {
   region = "us-east-2"
 }
 
-resource "aws_instance" "example" {
-  ami           = "ami-060a84cbcb5c14844" # Amazon Linux 2 AMI
-  instance_type = "t2.micro"
-  associate_public_ip_address = true
-  vpc_security_group_ids      = [aws_security_group.apache_sg.id]
+resource "aws_launch_template" "example" {
+  image_id                    = "ami-060a84cbcb5c14844" # Amazon Linux 2 AMI
+  instance_type               = "t2.micro"
+  vpc_security_group_ids = [aws_security_group.apache_sg.id]
 
-  user_data = <<-EOF
+
+  user_data = base64encode(<<-EOF
     #!/bin/bash
     sudo set -e
 
@@ -31,9 +31,10 @@ resource "aws_instance" "example" {
     sudo chown apache:apache /var/www/html/index.html
     sudo chmod 755 /var/www/html/index.html
   EOF
-
-  tags = {
-    Name = "Apache-Tomas-Server"
+  )
+ 
+  lifecycle {
+    create_before_destroy = true
   }
 }
 
@@ -70,7 +71,39 @@ variable "server_port" {
   default = 80
 }
 
-output "public_ip" {
-  value = aws_instance.example.public_ip
-  description = "The public IP address of the apache server" 
+#output "public_ip" {
+#  value = aws_launch_template.example.public_ip
+#  description = "The public IP address of the apache server" 
+#}
+
+data "aws_vpc" "default" {
+  default = true
 }
+
+data "aws_subnets" "default" {
+  filter {
+    name   = "vpc-id"
+    values = [data.aws_vpc.default.id]
+  }
+}
+
+resource "aws_autoscaling_group" "example" {
+  vpc_zone_identifier = data.aws_subnets.default.ids
+
+  min_size = 2
+  max_size = 5
+
+  launch_template {
+    id      = aws_launch_template.example.id
+    version = "$Latest"
+  }
+
+  tag {
+    key                 = "Name"
+    value               = "terraform-asg-example"
+    propagate_at_launch = true
+  }
+}
+
+
+  
