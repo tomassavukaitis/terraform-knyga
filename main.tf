@@ -2,7 +2,7 @@ provider "aws" {
   region = "us-east-2"
 }
 
-resource "aws_instance" "apache_server" {
+resource "aws_instance" "example" {
   ami           = "ami-060a84cbcb5c14844" # Amazon Linux 2 AMI
   instance_type = "t2.micro"
   associate_public_ip_address = true
@@ -22,8 +22,7 @@ resource "aws_instance" "apache_server" {
     sudo systemctl enable httpd
     sudo systemctl start httpd
 
-    # Modify Apache config to listen on port 8080
-    sudo sed -i 's/Listen 80/Listen 8080/' /etc/httpd/conf/httpd.conf
+  
 
     # Create a custom index.html
     sudo echo "Hello Tomas ;)" > /var/www/html/index.html
@@ -44,8 +43,8 @@ resource "aws_security_group" "apache_sg" {
   description = "Allow HTTP (80) and SSH (22) traffic"
 
   ingress {
-    from_port   = 8080
-    to_port     = 8080
+    from_port   = var.server_port
+    to_port     = var.server_port
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
   }
@@ -63,4 +62,15 @@ resource "aws_security_group" "apache_sg" {
     protocol    = "-1" # Allow all outbound
     cidr_blocks = ["0.0.0.0/0"]
   }
+}
+
+variable "server_port" {
+  description = "The port server will use for http requests"
+  type = number
+  default = 80
+}
+
+output "public_ip" {
+  value = aws_instance.example.public_ip
+  description = "The public IP address of the apache server" 
 }
