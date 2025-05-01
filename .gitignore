@@ -1,6 +1,6 @@
-global/.terraform
+global/.terraform/
 .terraform
 *.tfstate
 *.tfstate.backup
 services/webserver-cluster/.terraform/  
-stage/.terraform
+stage/.terraform/
