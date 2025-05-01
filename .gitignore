@@ -1,6 +1,3 @@
-*.tfstate
-*.tfstate.backup
 **/.terraform/
-services/webserver-cluster/.terraform
-# Ignore Terraform provider binaries
-**/.terraform/providers/registry.terraform.io/hashicorp/aws/**/windows_386/
+**/*.tfstate
+**/*.lock.hcl
