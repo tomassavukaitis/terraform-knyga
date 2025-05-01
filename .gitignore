@@ -4,3 +4,4 @@ global/.terraform/
 *.tfstate.backup
 services/webserver-cluster/.terraform/  
 stage/.terraform/
+**/.terraform/
